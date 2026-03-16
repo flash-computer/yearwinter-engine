@@ -6,36 +6,36 @@
 #define WARN_MSG "\x1b[35;1m" "WARNING:" "\x1b[0m" " "
 
 // For functions with singular scope where the declaration of a variable manually seems like a chore, and calling functions of return type YWE_Err manually.
-#define ER_RAISE_ERROR_ERR(game, error) {YWE_err macro_erval = YWER_ALL_CLEAR; YWER_RAISE_ERROR_ERR((game), macro_erval, (error))}
-#define ER_RAISE_ERROR_ERRPTR(game, pointer, error) {YWE_err macro_erval = YWER_ALL_CLEAR; YWER_RAISE_ERROR_ERRPTR((game), macro_erval, (pointer), (error))}
-#define ER_RAISE_ERROR_ERRINT(game, pointer, error) {YWE_err macro_erval = YWER_ALL_CLEAR; YWER_RAISE_ERROR_ERRINT((game), macro_erval, (integer), (error))}
+#define ER_RAISE_ERROR_ERR(game, error) {YWE_Err macro_erval = YWER_ALL_CLEAR; YWER_RAISE_ERROR_ERR((game), macro_erval, (error))}
+#define ER_RAISE_ERROR_ERRPTR(game, pointer, error) {YWE_Err macro_erval = YWER_ALL_CLEAR; YWER_RAISE_ERROR_ERRPTR((game), macro_erval, (pointer), (error))}
+#define ER_RAISE_ERROR_ERRINT(game, pointer, error) {YWE_Err macro_erval = YWER_ALL_CLEAR; YWER_RAISE_ERROR_ERRINT((game), macro_erval, (integer), (error))}
 
 #define C_RAISE_ERR(error) {ER_RAISE_ERROR_ERR(game, (error))}
 #define C_RAISE_ERRPTR(pointer, error) {ER_RAISE_ERROR_ERRPTR(game, (pointer), (error))}
 #define C_RAISE_ERRINT(integer, error) {ER_RAISE_ERROR_ERRINT(game, (integer), (error))}
 
-#define PASS_BACK_ERR(call) {YWE_err macro_erback = call; if(YWER_ERROR(macro_erback)){return macro_erback;}}
+#define PASS_BACK_ERR(call) {YWE_Err macro_erback = call; if(YWER_ERROR(macro_erback)){return macro_erback;}}
 
 // Initialize SDL
-YWE_err sdl_initialize(YWE_Engine *game)
+YWE_Err sdl_initialize(YWE_Engine *game)
 {
 	if(!SDL_Init(YWE_SDL_INIT_FLAGS))
 	{
-		ER_RAISE_ERROR_ERR(game, YWER_EGNS_GENERAL);
+		C_RAISE_ERR(YWER_EGNS_GENERAL);
 	}
 	if(!SDL_CreateWindowAndRenderer(YWE_CONFIG_MAIN_WINDOW_DEF_TITLE, YWE_CONFIG_MAIN_WINDOW_DEF_WIDTH_RATIO * YWE_CONFIG_MAIN_WINDOW_DEF_DIMENSION_SCALE, YWE_CONFIG_MAIN_WINDOW_DEF_HEIGHT_RATIO * YWE_CONFIG_MAIN_WINDOW_DEF_DIMENSION_SCALE, YWE_MAIN_WINDOW_DEF_FLAGS, &(game->window), &(game->renderer)))
 	{
-		ER_RAISE_ERROR_ERR(game, YWER_EGNS_GENERAL);
+		C_RAISE_ERR(YWER_EGNS_GENERAL);
 	}
 	if(!TTF_Init())
 	{
-		ER_RAISE_ERROR_ERR(game, YWER_EGNS_GENERAL);
+		C_RAISE_ERR(YWER_EGNS_GENERAL);
 	}
 	return YWER_ALL_CLEAR;
 }
 
 // Destroy a RenderUnit
-YWE_err YWE_DestroyRenderUnit(YWE_Engine *game, YWE_RenderUnit *ru)
+YWE_Err YWE_DestroyRenderUnit(YWE_Engine *game, YWE_RenderUnit *ru)
 {
 	YWE_DNode *temp = ru->children;
 	while(ru->children)
@@ -68,13 +68,58 @@ YWE_ErrPtr YWE_InitRenderUnit(YWE_Engine *game, YWE_RenderUnit *ru, bool to_free
 	ru->parent = NULL;
 	ru->children = NULL;
 	ru->tex = NULL;
-	ru->rect.x = ru->rect.y = ru->rect.w = ru->rect.h = 0;
+	ru->no_src = true;
+	ru->no_dst = true;
+	ru->src = (SDL_FRect){0, 0, 0, 0};
+	ru->dst = (SDL_FRect){0, 0, 0, 0};
 	ru->to_free = to_free;
 	return (YWE_ErrPtr){ru, YWER_ALL_CLEAR};
 }
 
+YWE_Err YWE_DestroyAndRemoveRenderUnit(YWE_Engine *game, YWE_RenderUnit *ru, YWE_DNode *node)
+{
+	if(!node)
+	{
+		C_RAISE_ERR(YWER_EFNR_ARGS);
+	}
+	if(node->data)
+	{
+		PASS_BACK_ERR(YWE_DestroyRenderUnit(game, (YWE_RenderUnit *)node->data));
+		node->data = NULL;
+	}
+	if(ru->children == node)
+	{
+		ru->children = node->prev;
+	}
+	PASS_BACK_ERR(YWE_RemoveDnodeList(game, node));
+	return YWER_ALL_CLEAR;
+}
+
+YWE_ErrPtr YWE_CreateAndAppendRenderUnit(YWE_Engine *game, YWE_RenderUnit *ru)
+{
+	YWE_ErrPtr retval = YWE_AppendDnodeList(game, ru->children, 0);
+	if(YWER_ERROR(retval.ret))
+	{
+		retval.value = NULL; // Making double sure
+		return retval;
+	}
+	ru->children = (YWE_DNode *)retval.value;
+	retval = YWE_InitRenderUnit(game, ru->children->data, true);
+	if(YWER_ERROR(retval.ret))
+	{
+		YWE_DNode *temp = ru->children;
+		ru->children = temp->prev;
+		YWE_RemoveDnodeList(game, temp); // Given the conditions, it cannot fail
+		retval.value = NULL; // Making double sure
+		return retval;
+	}
+	ru->children->data = (YWE_RenderUnit *)retval.value;
+	((YWE_RenderUnit *)(retval.value))->parent = ru;
+	return (YWE_ErrPtr){ru->children, YWER_ALL_CLEAR};
+}
+
 // Destroy a VN
-YWE_err YWE_DestroyVN(YWE_Engine *game, YWE_VN *vn)
+YWE_Err YWE_DestroyVN(YWE_Engine *game, YWE_VN *vn)
 {
 	PASS_BACK_ERR(YWE_DestroyRenderUnit(game, &(vn->ui)));
 	PASS_BACK_ERR(YWE_DestroyRenderUnit(game, &(vn->background)));
@@ -83,15 +128,31 @@ YWE_err YWE_DestroyVN(YWE_Engine *game, YWE_VN *vn)
 }
 
 // Initialize a VN
-YWE_err YWE_InitVN(YWE_Engine *game, YWE_VN *vn)
+YWE_Err YWE_InitVN(YWE_Engine *game, YWE_VN *vn)
 {
 	YWE_InitRenderUnit(game, &(vn->background), false);
+	int scr_width = 0;
+	int scr_height = 0;
+	if(!SDL_GetRenderOutputSize(game->renderer, &scr_width, &scr_height))
+	{
+		C_RAISE_ERR(YWER_EGNS_GENERAL);
+	}
+	vn->background.tex = SDL_CreateTexture(game->renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, scr_width, scr_height);
+	if(!(vn->background.tex))
+	{
+		C_RAISE_ERR(YWER_EGNS_GENERAL);
+	}
 	YWE_InitRenderUnit(game, &(vn->ui), false);
+	vn->ui.tex = SDL_CreateTexture(game->renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, scr_width, scr_height);
+	if(!(vn->ui.tex))
+	{
+		C_RAISE_ERR(YWER_EGNS_GENERAL);
+	}
 	return YWER_ALL_CLEAR;
 }
 
 // Destroy a Game Engine
-YWE_err YWE_DestroyEngine(YWE_Engine *game)
+YWE_Err YWE_DestroyEngine(YWE_Engine *game)
 {
 	PASS_BACK_ERR(YWE_DestroyVN(game, &(game->vn)));
 	TTF_Quit();
@@ -102,7 +163,7 @@ YWE_err YWE_DestroyEngine(YWE_Engine *game)
 }
 
 // Initialize a Game Engine
-YWE_err YWE_InitEngine(YWE_Engine *game)
+YWE_Err YWE_InitEngine(YWE_Engine *game)
 {
 	PASS_BACK_ERR(sdl_initialize(game));
 
@@ -112,7 +173,7 @@ YWE_err YWE_InitEngine(YWE_Engine *game)
 	// YWE_WindowProperties initialization
 	if(!SDL_SetWindowResizable(game->window, YWE_CONFIG_MAIN_WINDOW_DEF_RESIZABLE))
 	{
-		ER_RAISE_ERROR_ERR(game, YWER_EGNS_GENERAL);
+		C_RAISE_ERR(YWER_EGNS_GENERAL);
 	}
 	game->winprop.aspect_x = YWE_CONFIG_MAIN_WINDOW_DEF_WIDTH_RATIO;
 	game->winprop.aspect_y = YWE_CONFIG_MAIN_WINDOW_DEF_HEIGHT_RATIO;
@@ -125,6 +186,9 @@ YWE_err YWE_InitEngine(YWE_Engine *game)
 	game->frame.frame_target_timescale = YWE_CONFIG_RENDERING_DEF_FRAME_TARGET_TIMESCALE;
 	game->frame.frame_delay = 16;
 	YWE_MarkFrame(game);
+
+	// YWE_ProgramProperties initialization
+	game->progprop.stderr_output_enabled = YWE_CONFIG_STDERR_OUTPUT_DEF_UNSUPPRESSED;
 
 	return YWER_ALL_CLEAR;
 }
@@ -159,7 +223,7 @@ YWE_ErrPtr YWE_AllocPushFreelist(YWE_Engine *game, YWE_DNode *node, size_t size)
 	return (YWE_ErrPtr){ret_ptr, YWER_ALL_CLEAR};
 }
 
-YWE_err YWE_FreeFreelist(YWE_Engine *game, YWE_DNode *node)
+YWE_Err YWE_FreeFreelist(YWE_Engine *game, YWE_DNode *node)
 {
 	YWE_DNode *temp;
 	while(node)
@@ -205,7 +269,7 @@ YWE_ErrPtr YWE_AppendDnodeList(YWE_Engine *game, YWE_DNode *node, size_t data_sz
 	return (YWE_ErrPtr){new_node, YWER_ALL_CLEAR};
 }
 
-YWE_err YWE_RemoveDnodeList(YWE_Engine *game, YWE_DNode *node)
+YWE_Err YWE_RemoveDnodeList(YWE_Engine *game, YWE_DNode *node)
 {
 	if(!node)
 	{

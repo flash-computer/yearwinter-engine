@@ -19,3 +19,6 @@
 
 // Fallback frame_quantum for YWE_MarkFrame if frame_target exceeds timescale
 #define YWE_CONFIG_RENDERING_FALLBACK_FRAME_QUANTUM 1
+
+// Debug Configuration
+#define YWE_CONFIG_STDERR_OUTPUT_DEF_UNSUPPRESSED false

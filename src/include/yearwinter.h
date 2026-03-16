@@ -100,17 +100,52 @@
 	#define YWE_RENDER_DRIVER_NAME_CONFIGURED
 #endif
 
-void YWE_ExitGame(YWE_Engine *game, int exitcode);
+#ifndef YWE_STDERR_OUTPUT
+		#define YWE_STDERR_OUTPUT(game, ...) {if(game->progprop.stderr_output_enabled){fprintf(stderr, __VA_ARGS__);}}
+#endif
 
-// Rendering Functions
-YWE_err YWE_FrameRender(YWE_Engine *game);
-YWE_err YWE_DrawBackgroundTexture(YWE_Engine *game);
-YWE_err YWE_DrawUITexture(YWE_Engine *game);
+#ifndef YWE_CORE_PROTOTYPES
+	void YWE_ExitGame(YWE_Engine *game, int exitcode);
 
-// Frame Timing
-void YWE_MarkFrame(YWE_Engine *game);
-void YWE_MarkFrameEnd(YWE_Engine *game);
+	// Rendering Functions
+	YWE_Err YWE_FrameRender(YWE_Engine *game);
+	YWE_Err YWE_DrawBackgroundTexture(YWE_Engine *game);
+	YWE_Err YWE_DrawUITexture(YWE_Engine *game);
 
-// Event callbacks
-YWE_err YWE_InputEvent(YWE_Engine *game, SDL_Event *event);
-YWE_err YWE_ResizeEvent(YWE_Engine *game, SDL_WindowEvent *event);
+	YWE_Err YWE_RenderRenderUnit(YWE_Engine *game, YWE_RenderUnit *ru);
+
+	// Frame Timing
+	void YWE_MarkFrame(YWE_Engine *game);
+	void YWE_MarkFrameEnd(YWE_Engine *game);
+
+	// Event callbacks
+	YWE_Err YWE_InputEvent(YWE_Engine *game, SDL_Event *event);
+	YWE_Err YWE_ResizeEvent(YWE_Engine *game, SDL_WindowEvent *event);
+
+	// Error callback
+	YWE_Err YWE_ErrorHandler(YWE_Engine *game, YWE_Err code);
+
+	// Prototypes to Initialize and Destroy List Structures
+	YWE_ErrPtr YWE_AppendDnodeList(YWE_Engine *game, YWE_DNode *node, size_t data_sz);
+	YWE_Err YWE_RemoveDnodeList(YWE_Engine *game, YWE_DNode *node);
+
+	YWE_ErrPtr YWE_AllocPushFreelist(YWE_Engine *game, YWE_DNode *node, size_t size);
+	YWE_Err YWE_FreeFreelist(YWE_Engine *game, YWE_DNode *node);
+
+	// Init and Destroy Prototypes
+
+	// Render Unit
+	YWE_ErrPtr YWE_InitRenderUnit(YWE_Engine *game, YWE_RenderUnit *ru, bool to_free);
+	YWE_Err YWE_DestroyRenderUnit(YWE_Engine *game, YWE_RenderUnit *ru);
+
+	YWE_ErrPtr YWE_CreateAndAppendRenderUnit(YWE_Engine *game, YWE_RenderUnit *ru);
+	YWE_Err YWE_DestroyAndRemoveRenderUnit(YWE_Engine *game, YWE_RenderUnit *ru, YWE_DNode *node);
+
+	// VN
+	YWE_Err YWE_InitVN(YWE_Engine *game, YWE_VN *vn);
+	YWE_Err YWE_DestroyVN(YWE_Engine *game, YWE_VN *vn);
+
+	// Engine
+	YWE_Err YWE_InitEngine(YWE_Engine *game);
+	YWE_Err YWE_DestroyEngine(YWE_Engine *game);
+#endif
