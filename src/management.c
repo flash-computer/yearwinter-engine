@@ -34,97 +34,8 @@ YWE_Err sdl_initialize(YWE_Engine *game)
 	return YWER_ALL_CLEAR;
 }
 
-// Destroy a RenderUnit
-YWE_Err YWE_DestroyRenderUnit(YWE_Engine *game, YWE_RenderUnit *ru)
-{
-	YWE_DNode *temp = ru->children;
-	while(ru->children)
-	{
-		temp = ru->children;
-		ru->children = ru->children->next;
-		YWE_DestroyRenderUnit(game, temp->data);
-		PASS_BACK_ERR(YWE_RemoveDnodeList(game, temp));
-	}
-	SDL_DestroyTexture(ru->tex);
-	if(ru->to_free)
-	{
-		free(ru);
-	}
-	return YWER_ALL_CLEAR;
-}
-
-// Initialize a RenderUnit
-YWE_ErrPtr YWE_InitRenderUnit(YWE_Engine *game, YWE_RenderUnit *ru, bool to_free)
-{
-	if(!ru)
-	{
-		to_free = true;
-		ru = malloc(sizeof(YWE_RenderUnit));
-		if(!ru)
-		{
-			C_RAISE_ERRPTR(NULL, YWER_EMMR_ALLOC);
-		}
-	}
-
-	ru->name[0] = '\0';
-
-	ru->parent = NULL;
-	ru->children = NULL;
-
-	ru->tex = NULL;
-	ru->surface = NULL;
-
-	ru->no_src = true;
-	ru->no_dst = true;
-	ru->src = (SDL_FRect){0, 0, 0, 0};
-	ru->dst = (SDL_FRect){0, 0, 0, 0};
-
-	ru->target = false;
-	ru->to_free = to_free;
-	return (YWE_ErrPtr){ru, YWER_ALL_CLEAR};
-}
-
-YWE_Err YWE_DestroyAndRemoveRenderUnit(YWE_Engine *game, YWE_RenderUnit *ru, YWE_DNode *node)
-{
-	if(!node)
-	{
-		C_RAISE_ERR(YWER_EFNR_ARGS);
-	}
-	if(node->data)
-	{
-		PASS_BACK_ERR(YWE_DestroyRenderUnit(game, (YWE_RenderUnit *)node->data));
-		node->data = NULL;
-	}
-	if(ru->children == node)
-	{
-		ru->children = node->prev;
-	}
-	PASS_BACK_ERR(YWE_RemoveDnodeList(game, node));
-	return YWER_ALL_CLEAR;
-}
-
-YWE_ErrPtr YWE_CreateAndAppendRenderUnit(YWE_Engine *game, YWE_RenderUnit *ru)
-{
-	YWE_ErrPtr retval = YWE_AppendDnodeList(game, ru->children, 0);
-	if(YWER_ERROR(retval.ret))
-	{
-		retval.value = NULL; // Making double sure
-		return retval;
-	}
-	ru->children = (YWE_DNode *)retval.value;
-	retval = YWE_InitRenderUnit(game, ru->children->data, true);
-	if(YWER_ERROR(retval.ret))
-	{
-		YWE_DNode *temp = ru->children;
-		ru->children = temp->prev;
-		YWE_RemoveDnodeList(game, temp); // Given the conditions, it cannot fail
-		retval.value = NULL; // Making double sure
-		return retval;
-	}
-	ru->children->data = (YWE_RenderUnit *)retval.value;
-	((YWE_RenderUnit *)(retval.value))->parent = ru;
-	return (YWE_ErrPtr){ru->children, YWER_ALL_CLEAR};
-}
+// Sub sources
+#include"management/renderunits.c"
 
 // Destroy a VN
 YWE_Err YWE_DestroyVN(YWE_Engine *game, YWE_VN *vn)
@@ -147,7 +58,7 @@ YWE_Err YWE_InitVN(YWE_Engine *game, YWE_VN *vn)
 	}
 	for(int i=0; i<YWE_VN_TOP_LEVEL_RENDER_UNITS; i++)
 	{
-		YWE_InitRenderUnit(game, vn->units + i, false);
+		YWE_InitRenderUnit(game, vn->units + i);
 		vn->units[i].tex = SDL_CreateTexture(game->renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, scr_width, scr_height);
 		if(!(vn->units[i].tex))
 		{

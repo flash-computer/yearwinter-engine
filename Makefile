@@ -6,4 +6,10 @@ game.exe: src/window.c src/engine.c src/management.c
 	$(CC) $(CFLAGS) $(EXTRAFLAGS) $^ -o $@ $(LINKFLAGS)
 
 src/window.c: src/include/*
-	touch $@
+	touch src/window.c
+
+src/engine.c: src/engine/*
+	touch src/engine.c
+
+src/management.c: src/management/*
+	touch src/management.c

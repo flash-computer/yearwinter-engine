@@ -16,6 +16,13 @@
 
 #define PASS_BACK_ERR(call) {YWE_Err macro_erback = call; if(YWER_ERROR(macro_erback)){return macro_erback;}}
 
+// Easy Access to Rects (No Back Propagation)
+#define YWE_RUSP(ru) (YWE_GetRenderUnitRectSrc(game, &ru).value)
+#define YWE_PRUSP(ru) (YWE_GetRenderUnitRectSrc(game, ru).value)
+
+#define YWE_RUDP(ru) (YWE_GetRenderUnitRectDst(game, &ru).value)
+#define YWE_PRUDP(ru) (YWE_GetRenderUnitRectDst(game, ru).value)
+
 // Cleanup SDL and exit
 void YWE_ExitGame(YWE_Engine *game, int exit_code)
 {

@@ -116,7 +116,8 @@
 	YWE_Err YWE_DrawBackgroundTexture(YWE_Engine *game);
 	YWE_Err YWE_DrawUITexture(YWE_Engine *game);
 
-	YWE_Err YWE_RenderRenderUnit(YWE_Engine *game, YWE_RenderUnit *ru);
+	YWE_Err YWE_RenderRenderUnit(YWE_Engine *game, YWE_RenderUnit *ru, YWE_VolatileMode volatile_target_mode, bool root);
+	#define YWE_RenderTopUnit(game, ru, volatile_target_mode) (YWE_RenderRenderUnit((game), (ru), (volatile_target_mode), true))
 
 	// Frame Timing
 	void YWE_MarkFrame(YWE_Engine *game);
@@ -139,11 +140,14 @@
 	// Init and Destroy Prototypes
 
 	// Render Unit
-	YWE_ErrPtr YWE_InitRenderUnit(YWE_Engine *game, YWE_RenderUnit *ru, bool to_free);
+	YWE_ErrPtr YWE_InitRenderUnit(YWE_Engine *game, YWE_RenderUnit *ru);
 	YWE_Err YWE_DestroyRenderUnit(YWE_Engine *game, YWE_RenderUnit *ru);
 
-	YWE_ErrPtr YWE_CreateAndAppendRenderUnit(YWE_Engine *game, YWE_RenderUnit *ru);
-	YWE_Err YWE_DestroyAndRemoveRenderUnit(YWE_Engine *game, YWE_RenderUnit *ru, YWE_DNode *node);
+	YWE_ErrPtr YWE_CreateRenderUnitArray(YWE_Engine *game, YWE_RenderUnit *parent, size_t count);
+	YWE_Err YWE_DestroyRenderUnitArray(YWE_Engine *game, YWE_RenderUnit *array, size_t size);
+
+	YWE_ErrPtr YWE_GetRenderUnitRectSrc(YWE_Engine *game, YWE_RenderUnit *ru);
+	YWE_ErrPtr YWE_GetRenderUnitRectDst(YWE_Engine *game, YWE_RenderUnit *ru);
 
 	// VN
 	YWE_Err YWE_InitVN(YWE_Engine *game, YWE_VN *vn);

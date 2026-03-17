@@ -5,6 +5,18 @@
 struct YWE_GameEngine;
 typedef struct YWE_GameEngine YWE_Engine;
 
+/*---------------------------------------------------------------Enums---------------------------------------------------------------*/
+/*-----------------------------------------------------------------------------------------------------------------------------------*/
+/*-----------------------------------------------------------------|-----------------------------------------------------------------*/
+
+#ifndef YWE_ENUMS
+	typedef enum YWE_VolatileMode
+	{
+		YWE_VOLATILE_PRESERVE, YWE_VOLATILE_TOGGLE, YWE_VOLATILE_TRUE, YWE_VOLATILE_FALSE
+	} YWE_VolatileMode;
+	#define YWE_ENUMS
+#endif
+
 /*------------------------------------------------------------Error Types------------------------------------------------------------*/
 /*-----------------------------------------------------------------------------------------------------------------------------------*/
 /*-----------------------------------------------------------------|-----------------------------------------------------------------*/
@@ -46,30 +58,37 @@ typedef struct YWE_DoublyLinkedListNode
 /*-----------------------------------------------------------------------------------------------------------------------------------*/
 /*-----------------------------------------------------------------|-----------------------------------------------------------------*/
 
+typedef struct YWE_RenderUnitProperties
+{
+	bool no_src;
+	bool src_is_rel;
+	bool no_dst;
+	bool dst_is_rel;
+	bool volatile_target;
+	bool to_free;
+
+	YWE_VolatileMode volatile_target_mode;
+} YWE_RenderUnitProperties;
+
 typedef struct YWE_RenderUnit
 {
 	char name[32];
 
 	struct YWE_RenderUnit *parent;
-	YWE_DNode *children;
+	struct YWE_RenderUnit *children;
+	size_t children_count;
 
 	SDL_Texture *tex;
 	SDL_Surface *surface;
 
-	bool no_src;
 	SDL_FRect src;
-	bool no_dst;
 	SDL_FRect dst;
 
-	bool target;
-	bool to_free;
-} YWE_RenderUnit;
-// Render Unit Rect Pointer easy access
-#define YWE_RUSP(ru) (((ru).no_src)?NULL:(&((ru).src)))
-#define YWE_PRUSP(ru) (((ru)->no_src)?NULL:(&((ru)->src)))
+	SDL_FRect abs_src;
+	SDL_FRect abs_dst;
 
-#define YWE_RUDP(ru) (((ru).no_dst)?NULL:(&((ru).dst)))
-#define YWE_PRUDP(ru) (((ru)->no_dst)?NULL:(&((ru)->dst)))
+	YWE_RenderUnitProperties prop;
+} YWE_RenderUnit;
 
 typedef struct YWE_VNScreen
 {
