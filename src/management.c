@@ -65,13 +65,21 @@ YWE_ErrPtr YWE_InitRenderUnit(YWE_Engine *game, YWE_RenderUnit *ru, bool to_free
 			C_RAISE_ERRPTR(NULL, YWER_EMMR_ALLOC);
 		}
 	}
+
+	ru->name[0] = '\0';
+
 	ru->parent = NULL;
 	ru->children = NULL;
+
 	ru->tex = NULL;
+	ru->surface = NULL;
+
 	ru->no_src = true;
 	ru->no_dst = true;
 	ru->src = (SDL_FRect){0, 0, 0, 0};
 	ru->dst = (SDL_FRect){0, 0, 0, 0};
+
+	ru->target = false;
 	ru->to_free = to_free;
 	return (YWE_ErrPtr){ru, YWER_ALL_CLEAR};
 }
@@ -121,32 +129,30 @@ YWE_ErrPtr YWE_CreateAndAppendRenderUnit(YWE_Engine *game, YWE_RenderUnit *ru)
 // Destroy a VN
 YWE_Err YWE_DestroyVN(YWE_Engine *game, YWE_VN *vn)
 {
-	PASS_BACK_ERR(YWE_DestroyRenderUnit(game, &(vn->ui)));
-	PASS_BACK_ERR(YWE_DestroyRenderUnit(game, &(vn->background)));
-	vn->dialog_text_surface = NULL;
+	for(int i=0; i<YWE_VN_TOP_LEVEL_RENDER_UNITS; i++)
+	{
+		PASS_BACK_ERR(YWE_DestroyRenderUnit(game, vn->units + i));
+	}
 	return YWER_ALL_CLEAR;
 }
 
 // Initialize a VN
 YWE_Err YWE_InitVN(YWE_Engine *game, YWE_VN *vn)
 {
-	YWE_InitRenderUnit(game, &(vn->background), false);
 	int scr_width = 0;
 	int scr_height = 0;
 	if(!SDL_GetRenderOutputSize(game->renderer, &scr_width, &scr_height))
 	{
 		C_RAISE_ERR(YWER_EGNS_GENERAL);
 	}
-	vn->background.tex = SDL_CreateTexture(game->renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, scr_width, scr_height);
-	if(!(vn->background.tex))
+	for(int i=0; i<YWE_VN_TOP_LEVEL_RENDER_UNITS; i++)
 	{
-		C_RAISE_ERR(YWER_EGNS_GENERAL);
-	}
-	YWE_InitRenderUnit(game, &(vn->ui), false);
-	vn->ui.tex = SDL_CreateTexture(game->renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, scr_width, scr_height);
-	if(!(vn->ui.tex))
-	{
-		C_RAISE_ERR(YWER_EGNS_GENERAL);
+		YWE_InitRenderUnit(game, vn->units + i, false);
+		vn->units[i].tex = SDL_CreateTexture(game->renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, scr_width, scr_height);
+		if(!(vn->units[i].tex))
+		{
+			C_RAISE_ERR(YWER_EGNS_GENERAL);
+		}
 	}
 	return YWER_ALL_CLEAR;
 }

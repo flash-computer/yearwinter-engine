@@ -65,6 +65,7 @@
 	#include<SDL3/sdl.h>
 	#include<SDL3_image/SDL_image.h>
 	#include<SDL3_ttf/SDL_ttf.h>
+	#include<SDL3_mixer/SDL_mixer.h>
 	#define SDLHEADERS_INCLUDED
 #endif
 
@@ -85,6 +86,9 @@
 #endif
 #ifndef YWE_MAIN_WINDOW_DEF_FLAGS
 	#define YWE_MAIN_WINDOW_DEF_FLAGS (SDL_WINDOW_RESIZABLE)
+#endif
+#ifndef YWE_VN_TOP_LEVEL_RENDER_UNITS
+	#define YWE_VN_TOP_LEVEL_RENDER_UNITS 8
 #endif
 
 /*---------------------------------------------------------Engine Prototypes---------------------------------------------------------*/

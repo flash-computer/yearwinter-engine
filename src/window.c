@@ -54,17 +54,14 @@ YWE_Err YWE_ResizeEvent(YWE_Engine *game, SDL_WindowEvent *event)
 
 	// Remake the Top Level Textures in VN
 	YWE_VN *vn = &(game->vn);
-	SDL_DestroyTexture(vn->background.tex);
-	SDL_DestroyTexture(vn->ui.tex);
-	vn->background.tex = SDL_CreateTexture(game->renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, new_x, new_y);
-	if(!(vn->background.tex))
+	for(int i=0; i<YWE_VN_TOP_LEVEL_RENDER_UNITS; i++)
 	{
-		C_RAISE_ERR(YWER_EGNS_GENERAL);
-	}
-	vn->ui.tex = SDL_CreateTexture(game->renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, new_x, new_y);
-	if(!(vn->ui.tex))
-	{
-		C_RAISE_ERR(YWER_EGNS_GENERAL);
+		SDL_DestroyTexture(vn->units[i].tex);
+		vn->units[i].tex = SDL_CreateTexture(game->renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, new_x, new_y);
+		if(!(vn->units[i].tex))
+		{
+			C_RAISE_ERR(YWER_EGNS_GENERAL);
+		}
 	}
 
 	return YWER_ALL_CLEAR;

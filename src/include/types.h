@@ -48,13 +48,20 @@ typedef struct YWE_DoublyLinkedListNode
 
 typedef struct YWE_RenderUnit
 {
+	char name[32];
+
 	struct YWE_RenderUnit *parent;
 	YWE_DNode *children;
+
 	SDL_Texture *tex;
+	SDL_Surface *surface;
+
 	bool no_src;
 	SDL_FRect src;
 	bool no_dst;
 	SDL_FRect dst;
+
+	bool target;
 	bool to_free;
 } YWE_RenderUnit;
 // Render Unit Rect Pointer easy access
@@ -66,9 +73,7 @@ typedef struct YWE_RenderUnit
 
 typedef struct YWE_VNScreen
 {
-	YWE_RenderUnit background;
-	YWE_RenderUnit ui;
-	SDL_Surface *dialog_text_surface;
+	YWE_RenderUnit units[8];
 } YWE_VN;
 
 typedef struct YWE_WindowProperties
